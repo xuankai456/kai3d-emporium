@@ -30,3 +30,17 @@ must be JPG, PNG, or WebP.
 For deployment, configure a persistent random `SECRET_KEY`, enable HTTPS and
 `COOKIE_SECURE=1`, and use a production WSGI server. Set `CONTACT_EMAIL` to the
 studio's preferred address before publishing.
+
+## Deploy to Vercel
+
+Import this repository into Vercel and deploy with the default Python runtime.
+Vercel detects the Flask `app` exported from the root `app.py`. The root
+`vercel.json` includes `templates/**` and `static/**` in that function bundle so
+Flask can render its Jinja templates and serve the app's static assets.
+
+Set `SECRET_KEY` and `COOKIE_SECURE=1` in Vercel's environment variables.
+Vercel's `/tmp` storage is temporary and may be reset between function
+instances, so this SQLite-backed app is suitable for a preview deployment
+only; accounts, uploaded files, and edits are not durable there. Before using
+it as a live site, move the database to a persistent hosted database and
+uploads to persistent object storage.

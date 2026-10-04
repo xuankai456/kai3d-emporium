@@ -2,6 +2,7 @@ import os
 import re
 import secrets
 import sqlite3
+import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
@@ -28,8 +29,24 @@ from werkzeug.utils import secure_filename
 
 
 ROOT = Path(__file__).resolve().parent
-DATABASE = ROOT / "instance" / "emporium.sqlite3"
-UPLOAD_FOLDER = ROOT / "static" / "uploads"
+VERCEL_TMP = Path(tempfile.gettempdir()) / "kai3d-emporium"
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+DATABASE = Path(
+    os.environ.get(
+        "DATABASE_PATH",
+        str(
+            VERCEL_TMP / "emporium.sqlite3"
+            if IS_VERCEL
+            else ROOT / "instance" / "emporium.sqlite3"
+        ),
+    )
+)
+UPLOAD_FOLDER = Path(
+    os.environ.get(
+        "UPLOAD_FOLDER",
+        str(VERCEL_TMP / "uploads" if IS_VERCEL else ROOT / "static" / "uploads"),
+    )
+)
 PORTFOLIO_CATEGORIES = ("Characters", "Worlds", "Creatures", "Props")
 VAULT_CATEGORIES = ("Character", "Environment", "Creature", "Prop", "Material")
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
