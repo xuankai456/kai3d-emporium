@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b0e">
+  <meta name="description" content="Kai's Emporium — cinematic 3D art, worlds, and freely shared digital assets.">
+  <title>{% block title %}Kai's Emporium — Worlds in the making{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/site.js') }}" defer></script>
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="wordmark" href="{{ url_for('index') }}" aria-label="Kai's Emporium home">
+        <img class="logo" src="{{ url_for('static', filename='images/warden-reference.jpg') }}" alt="Kai's Emporium logo">
+        <div class="wordmark-text">
+          <span class="wordmark-mark">K<span>•</span>E</span>
+          <span class="wordmark-name">KAI'S EMPORIUM</span>
+        </div>
+      </a>
+      {% if current_user %}
+        <nav class="main-nav" aria-label="Main navigation">
+          <a href="{{ url_for('index') }}#work">Selected work</a>
+          <a href="{{ url_for('index') }}#vault">The vault</a>
+          <a href="{{ url_for('index') }}#services">Commissions</a>
+          {% if current_user.role == 'admin' %}<a href="{{ url_for('admin_dashboard') }}">Studio uploads</a>{% endif %}
+        </nav>
+        {% if current_user.role == 'admin' %}
+          <div class="header-admin-actions">
+            <a class="header-cta" href="{{ url_for('admin_dashboard') }}">Studio uploads <span aria-hidden="true">↗</span></a>
+            <form class="header-logout" method="post" action="{{ url_for('admin_logout') }}">
+              <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+              <button class="header-cta" type="submit">Sign out <span aria-hidden="true">↗</span></button>
+            </form>
+          </div>
+        {% else %}
+          <form class="header-logout" method="post" action="{{ url_for('logout') }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button class="header-cta" type="submit">Sign out <span aria-hidden="true">↗</span></button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack" role="status" aria-live="polite">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <main>{% block content %}{% endblock %}</main>
+
+    <footer class="site-footer">
+      <a class="footer-brand" href="{{ url_for('index') }}">KAI'S EMPORIUM<span>®</span></a>
+      <span>Independent worlds. Carefully made.</span>
+      <div class="footer-contact">
+        <a href="mailto:alqaqa469@gmail.com" title="Email">alqaqa469</a>
+        <span class="separator">—</span>
+        <a href="#" title="Discord: xuankai456">Discord: xuankai456</a>
+      </div>
+      {% if current_user and current_user.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}">Studio uploads</a>
+      {% endif %}
+    </footer>
+  </div>
+</body>
+</html>

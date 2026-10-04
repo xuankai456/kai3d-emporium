@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Studio dashboard — Kai's Emporium{% endblock %}
+{% block content %}
+<section class="admin-page">
+  <div class="admin-heading">
+    <div><p class="eyebrow"><span class="status-dot"></span> PRIVATE STUDIO / CONTENT</p><h1>The <em>workshop.</em></h1></div>
+    <a class="button button-quiet" href="{{ url_for('index') }}">View website <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="admin-tabs"><a href="#portfolio">Portfolio <span>{{ portfolio|length }}</span></a><a href="#vault">Free vault <span>{{ assets|length }}</span></a></div>
+
+  <section class="admin-section" id="portfolio">
+    <div class="admin-section-heading"><div><p class="eyebrow">01 / SELECTED WORK</p><h2>Portfolio <em>pieces.</em></h2></div></div>
+    <form class="admin-form" method="post" action="{{ url_for('add_portfolio_item') }}" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="form-section-title"><span>ADD A NEW PIECE</span><span>PREVIEW / JPG, PNG OR WEBP · OPTIONAL FILE / ANY FORMAT</span></div>
+      <div class="form-grid">
+        <div class="field"><label for="work-title">Title</label><input id="work-title" name="title" maxlength="100" required></div>
+        <div class="field"><label for="work-category">Category</label><select id="work-category" name="category" required>{% for category in portfolio_categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select></div>
+        <div class="field field-wide"><label for="work-description">Description</label><textarea id="work-description" name="description" rows="3" maxlength="1200" required></textarea></div>
+        <div class="field"><label for="work-tags">Tags <small>COMMA SEPARATED</small></label><input id="work-tags" name="tags" placeholder="sculpture, fantasy, Blender"></div>
+        <div class="field"><label for="work-image">Preview image</label><input id="work-image" name="thumbnail" type="file" accept=".jpg,.jpeg,.png,.webp" required></div>
+        <div class="field"><label for="work-file">Downloadable project file <small>OPTIONAL / ANY FORMAT</small></label><input id="work-file" name="download_file" type="file"></div>
+      </div>
+      <button class="button button-primary" type="submit">Add to portfolio <span aria-hidden="true">↗</span></button>
+    </form>
+    <div class="admin-content-list">
+      {% for item in portfolio %}
+        <article class="admin-list-item">
+          <img src="{{ url_for('media', filename=item.thumbnail) }}" alt="" loading="lazy">
+          <div><span class="card-meta">{{ item.category }}</span><h3>{{ item.title }}</h3><p>{{ item.description }}</p></div>
+          <button class="edit-button" type="button" data-id="{{ item.id }}" data-category="{{ item.category }}" data-tags="{{ item.tags }}" data-download-filename="{{ item.download_original_filename or '' }}" aria-label="Edit {{ item.title }}">✎</button>
+          <form method="post" action="{{ url_for('delete_portfolio_item', item_id=item.id) }}" data-confirm="Remove this portfolio piece?">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="delete-button" type="submit" aria-label="Delete {{ item.title }}">×</button>
+          </form>
+        </article>
+      {% else %}
+        <p class="admin-empty">No portfolio pieces yet. Add the first one above.</p>
+      {% endfor %}
+    </div>
+    <div class="edit-modal" id="portfolio-edit-modal" hidden>
+      <div class="modal-content">
+        <button class="modal-close" type="button" data-modal-close aria-label="Close editor">✕</button>
+        <h3>Edit Portfolio Piece</h3>
+        <form id="portfolio-edit-form" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="_item_id" value="">
+          <div class="form-grid">
+            <div class="field"><label for="edit-work-title">Title</label><input id="edit-work-title" name="title" maxlength="100" required></div>
+            <div class="field"><label for="edit-work-category">Category</label><select id="edit-work-category" name="category" required>{% for category in portfolio_categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select></div>
+            <div class="field field-wide"><label for="edit-work-description">Description</label><textarea id="edit-work-description" name="description" rows="3" maxlength="1200" required></textarea></div>
+            <div class="field"><label for="edit-work-tags">Tags <small>COMMA SEPARATED</small></label><input id="edit-work-tags" name="tags" placeholder="sculpture, fantasy, Blender"></div>
+            <div class="field"><label for="edit-work-image">Preview image <small>OPTIONAL</small></label><input id="edit-work-image" name="thumbnail" type="file" accept=".jpg,.jpeg,.png,.webp"></div>
+            <div class="field"><label for="edit-work-file">Replace downloadable file <small>OPTIONAL / ANY FORMAT</small></label><input id="edit-work-file" name="download_file" type="file"><small id="edit-work-current-file">No downloadable file attached.</small></div>
+            <div class="field field-wide"><label class="download-remove-control"><input name="remove_download" value="1" type="checkbox"> Remove attached downloadable file</label></div>
+          </div>
+          <div class="modal-actions">
+            <button class="button button-quiet" type="button" data-modal-close>Cancel</button>
+            <button class="button button-primary" type="submit">Update piece <span aria-hidden="true">↗</span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-section" id="vault">
+    <div class="admin-section-heading"><div><p class="eyebrow">02 / OPEN STUDIO</p><h2>Free asset <em>vault.</em></h2></div></div>
+    <form class="admin-form" method="post" action="{{ url_for('add_vault_asset') }}" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+      <div class="form-section-title"><span>RELEASE AN ASSET</span><span>ANY FILE FORMAT / MAX 100 MB</span></div>
+      <div class="form-grid">
+        <div class="field"><label for="asset-title">Title</label><input id="asset-title" name="title" maxlength="100" required></div>
+        <div class="field"><label for="asset-category">Category</label><select id="asset-category" name="category" required>{% for category in vault_categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select></div>
+        <div class="field field-wide"><label for="asset-description">Description</label><textarea id="asset-description" name="description" rows="3" maxlength="1200" required></textarea></div>
+        <div class="field"><label for="asset-tags">Tags <small>COMMA SEPARATED</small></label><input id="asset-tags" name="tags" placeholder="low-poly, game-ready, Blender"></div>
+        <div class="field"><label for="asset-file">Asset file <small>ANY FILE TYPE</small></label><input id="asset-file" name="asset" type="file" required></div>
+        <div class="field"><label for="asset-preview">Preview image <small>OPTIONAL</small></label><input id="asset-preview" name="preview" type="file" accept=".jpg,.jpeg,.png,.webp"></div>
+      </div>
+      <button class="button button-primary" type="submit">Release to the vault <span aria-hidden="true">↗</span></button>
+    </form>
+    <div class="admin-content-list">
+      {% for asset in assets %}
+        <article class="admin-list-item">
+          <div class="admin-file-icon">{{ asset.original_filename.rsplit('.', 1)[-1]|upper }}</div>
+          <div><span class="card-meta">{{ asset.category }} / {{ asset.original_filename }}</span><h3>{{ asset.title }}</h3><p>{{ asset.description }}</p></div>
+          <button class="edit-button" type="button" data-id="{{ asset.id }}" aria-label="Edit {{ asset.title }}">✎</button>
+          <form method="post" action="{{ url_for('delete_vault_asset', asset_id=asset.id) }}" data-confirm="Remove this asset and its uploaded files?">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}"><button class="delete-button" type="submit" aria-label="Delete {{ asset.title }}">×</button>
+          </form>
+        </article>
+      {% else %}
+        <p class="admin-empty">No free assets released yet. Upload one above.</p>
+      {% endfor %}
+    </div>
+    <div class="edit-modal" id="vault-edit-modal" hidden>
+      <div class="modal-content">
+        <button class="modal-close" type="button" data-modal-close aria-label="Close editor">✕</button>
+        <h3>Edit Asset</h3>
+        <form id="vault-edit-form" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="_asset_id" value="">
+          <div class="form-grid">
+            <div class="field"><label for="edit-asset-title">Title</label><input id="edit-asset-title" name="title" maxlength="100" required></div>
+            <div class="field"><label for="edit-asset-category">Category</label><select id="edit-asset-category" name="category" required>{% for category in vault_categories %}<option value="{{ category }}">{{ category }}</option>{% endfor %}</select></div>
+            <div class="field field-wide"><label for="edit-asset-description">Description</label><textarea id="edit-asset-description" name="description" rows="3" maxlength="1200" required></textarea></div>
+            <div class="field"><label for="edit-asset-tags">Tags <small>COMMA SEPARATED</small></label><input id="edit-asset-tags" name="tags" placeholder="low-poly, game-ready, Blender"></div>
+            <div class="field"><label for="edit-asset-file">Asset file <small>OPTIONAL / ANY TYPE</small></label><input id="edit-asset-file" name="asset" type="file"></div>
+            <div class="field"><label for="edit-asset-preview">Preview image <small>OPTIONAL</small></label><input id="edit-asset-preview" name="preview" type="file" accept=".jpg,.jpeg,.png,.webp"></div>
+          </div>
+          <div class="modal-actions">
+            <button class="button button-quiet" type="button" data-modal-close>Cancel</button>
+            <button class="button button-primary" type="submit">Update asset <span aria-hidden="true">↗</span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</section>
+{% endblock %}

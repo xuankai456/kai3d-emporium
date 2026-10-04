@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow"><span class="status-dot"></span> INDEPENDENT 3D ARTIST <span class="eyebrow-rule"></span> AVAILABLE FOR SELECT PROJECTS</p>
+    <h1>Worlds born<br>from <em>shadow.</em></h1>
+    <p class="hero-intro">I build characters, creatures, and places with a little more myth in them. A working collection of things made, imagined, and shared.</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="#work">Explore the work <span aria-hidden="true">↓</span></a>
+      <a class="text-link" href="#vault">Browse free assets <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="hero-note"><span class="note-mark">✳</span><span>VISUAL DIRECTION —<br>MONOCHROME STUDY</span></div>
+  </div>
+  <div class="hero-art">
+    <div class="art-frame">
+      <img src="{{ url_for('static', filename='images/warden-reference.jpg') }}" alt="Monochrome dark-fantasy character study in an ornate horned mask">
+      <span class="frame-corner corner-tl"></span><span class="frame-corner corner-tr"></span>
+      <span class="frame-corner corner-bl"></span><span class="frame-corner corner-br"></span>
+      <div class="art-caption"><span>FIG. 001</span><span>FORM / SHADOW / STILLNESS</span></div>
+      <div class="art-index">01 — 04</div>
+    </div>
+    <div class="hero-stamp">K<br><span>✳</span><br>E</div>
+  </div>
+  <div class="hero-bottomline"><span>SCULPTING THE UNSEEN</span><span>EST. MMXXIV</span><span>SCROLL TO EXPLORE ↓</span></div>
+</section>
+
+<section class="ticker" aria-label="Studio specialties">
+  <div class="ticker-track"><span>CHARACTER DESIGN</span><b>✳</b><span>WORLD BUILDING</span><b>✳</b><span>3D SCULPTURE</span><b>✳</b><span>CREATURES & RELICS</span><b>✳</b><span>CHARACTER DESIGN</span><b>✳</b><span>WORLD BUILDING</span><b>✳</b><span>3D SCULPTURE</span><b>✳</b><span>CREATURES & RELICS</span><b>✳</b></div>
+</section>
+
+<section class="section work-section" id="work">
+  <div class="section-heading">
+    <div><p class="eyebrow"><span class="section-number">01</span> THE BODY OF WORK</p><h2>Selected <em>work.</em></h2></div>
+    <p class="section-aside">A growing archive of forms, places,<br>and the stories between them.</p>
+  </div>
+  <div class="filter-row" role="group" aria-label="Filter portfolio by category">
+    <button class="filter-button is-active" type="button" data-filter="all">Everything <span>{{ portfolio|length }}</span></button>
+    {% for category in portfolio_categories %}
+      <button class="filter-button" type="button" data-filter="{{ category }}">{{ category }}</button>
+    {% endfor %}
+  </div>
+  {% if portfolio %}
+    <div class="portfolio-grid">
+      {% for item in portfolio %}
+        <article class="portfolio-card" data-category="{{ item.category }}">
+          <div class="portfolio-image">
+            <img src="{{ url_for('media', filename=item.thumbnail) }}" alt="{{ item.title }} — {{ item.category }} artwork" loading="lazy">
+            <span class="image-index">{{ "%02d"|format(loop.index) }}</span>
+            <span class="image-open" aria-hidden="true">↗</span>
+          </div>
+          <div class="card-meta"><span>{{ item.category }}</span><span>{{ item.created_at|int|datetimeformat }}</span></div>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.description }}</p>
+          {% if item.tags %}<div class="tag-list">{% for tag in item.tags.split(",") %}<span>{{ tag.strip() }}</span>{% endfor %}</div>{% endif %}
+          {% if item.download_file %}
+            <a class="download-link portfolio-download-link" href="{{ url_for('download_portfolio_file', item_id=item.id) }}">Download project file <span aria-hidden="true">↓</span></a>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+    <p class="filter-empty" hidden>No work in this category just yet.</p>
+  {% else %}
+    <div class="empty-work">
+      <span class="empty-glyph">✳</span>
+      <p class="eyebrow">THE ARCHIVE IS TAKING SHAPE</p>
+      <h3>Good things take form.</h3>
+      <p>New work will appear here as it leaves the studio.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="vault-section" id="vault">
+  <div class="section vault-layout">
+    <div class="vault-copy">
+      <p class="eyebrow"><span class="section-number">02</span> OPEN STUDIO</p>
+      <h2>Take a piece<br>of the <em>world.</em></h2>
+      <p>Useful bits from the workbench, released for your own experiments. Free to download; check with the studio before reusing or redistributing.</p>
+      <div class="vault-legend"><span class="legend-symbol">↓</span><span>FREE DOWNLOADS<br><small>BLEND · FBX · OBJ · ARCHIVES</small></span></div>
+    </div>
+    <div class="vault-content">
+      <div class="vault-topline"><span>THE ASSET VAULT</span><span>{{ assets|length }} {{ 'FILE' if assets|length == 1 else 'FILES' }} <i></i></span></div>
+      {% if assets %}
+        <div class="vault-list">
+          {% for asset in assets %}
+            <article class="vault-card">
+              <div class="vault-preview">
+                {% if asset.preview %}
+                  <img src="{{ url_for('media', filename=asset.preview) }}" alt="Preview of {{ asset.title }}" loading="lazy">
+                {% else %}
+                  <span class="file-glyph" aria-hidden="true">✳</span>
+                {% endif %}
+              </div>
+              <div class="vault-info">
+                <div class="card-meta"><span>{{ asset.category }}</span><span>{{ asset.original_filename.rsplit('.', 1)[-1]|upper }}</span></div>
+                <h3>{{ asset.title }}</h3>
+                <p>{{ asset.description }}</p>
+                {% if asset.tags %}<div class="tag-list">{% for tag in asset.tags.split(",") %}<span>{{ tag.strip() }}</span>{% endfor %}</div>{% endif %}
+              </div>
+              <a class="download-link" href="{{ url_for('download_asset', asset_id=asset.id) }}" aria-label="Download {{ asset.title }}">↓</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="vault-empty"><span>✳</span><p>Nothing released just yet.<br><small>Check back when the next study is ready.</small></p></div>
+      {% endif %}
+      <div class="vault-footnote"><span>FREE TO DOWNLOAD</span><span>ASK BEFORE REUSE OR REDISTRIBUTION</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section services-section" id="services">
+  <div class="section-heading">
+    <div><p class="eyebrow"><span class="section-number">03</span> MADE TO ORDER</p><h2>Bring a world<br>to <em>life.</em></h2></div>
+    <p class="section-aside">Small studio, considered craft.<br>Every project starts with a conversation.</p>
+  </div>
+  <div class="service-grid">
+    <article class="service-card"><span class="service-number">01 / FORM</span><span class="service-symbol">◇</span><h3>Character & creature</h3><p>Distinctive 3D characters, creatures, and sculptural forms built around a strong silhouette and a story.</p><a href="#contact">Discuss a character <span>↗</span></a></article>
+    <article class="service-card"><span class="service-number">02 / PLACE</span><span class="service-symbol">⌂</span><h3>World & environment</h3><p>Atmospheric locations, props, and visual worlds for games, film, and independent projects.</p><a href="#contact">Build a world <span>↗</span></a></article>
+    <article class="service-card"><span class="service-number">03 / IMAGE</span><span class="service-symbol">✳</span><h3>Concept & lookdev</h3><p>Exploration of form, materials, and mood to find a clear visual direction before production.</p><a href="#contact">Find your direction <span>↗</span></a></article>
+  </div>
+</section>
+
+<section class="contact-section" id="contact">
+  <div class="contact-inner">
+    <p class="eyebrow"><span class="status-dot"></span> HAVE A GOOD ONE IN MIND?</p>
+    <h2>Let's make<br>something <em>mythic.</em></h2>
+    <a class="button button-primary contact-button" href="mailto:alqaqa469@gmail.com?subject=Project%20enquiry">Tell me about it <span aria-hidden="true">↗</span></a>
+    <a class="contact-discord" href="https://discord.com/channels/@me" target="_blank" rel="noopener noreferrer">kai3d.com <span aria-hidden="true">↗</span></a>
+    <span class="contact-index">KE — 2024 / ONWARD</span>
+  </div>
+  <div class="contact-orbit orbit-one"></div><div class="contact-orbit orbit-two"></div>
+</section>
+{% endblock %}
