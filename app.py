@@ -109,6 +109,8 @@ def create_app(test_config=None):
         DATABASE=str(DATABASE),
         UPLOAD_FOLDER=str(UPLOAD_FOLDER),
         ADMIN_EMAIL=os.environ.get("ADMIN_EMAIL", "alqaqa469@gmail.com").strip().lower(),
+        ADMIN_USERNAME=os.environ.get("ADMIN_USERNAME", "kai").strip().lower(),
+        ADMIN_PASSWORD=os.environ.get("ADMIN_PASSWORD", ""),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "0") == "1",
@@ -150,6 +152,46 @@ def create_app(test_config=None):
             "CREATE UNIQUE INDEX IF NOT EXISTS accounts_username_unique "
             "ON accounts(username) WHERE username IS NOT NULL"
         )
+        admin_password = app.config["ADMIN_PASSWORD"]
+        admin_username = app.config["ADMIN_USERNAME"]
+        if admin_password:
+            if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{2,29}", admin_username):
+                raise ValueError("ADMIN_USERNAME must be a valid 3–30 character username.")
+            if not 8 <= len(admin_password) <= MAX_ADMIN_PASSWORD_LENGTH:
+                raise ValueError("ADMIN_PASSWORD must be between 8 and 1024 characters.")
+            admin_email = app.config["ADMIN_EMAIL"]
+            email_account = connection.execute(
+                "SELECT id FROM accounts WHERE lower(email) = ?", (admin_email,)
+            ).fetchone()
+            username_account = connection.execute(
+                "SELECT id FROM accounts WHERE lower(username) = ?", (admin_username,)
+            ).fetchone()
+            if email_account and username_account and email_account["id"] != username_account["id"]:
+                connection.execute(
+                    "UPDATE accounts SET username = NULL WHERE id = ?",
+                    (username_account["id"],),
+                )
+                username_account = None
+            admin_account = email_account or username_account
+            password_hash = generate_password_hash(admin_password)
+            if admin_account:
+                connection.execute(
+                    "UPDATE accounts SET email = ?, username = ?, password_hash = ?, "
+                    "role = 'admin', email_verified = 1 WHERE id = ?",
+                    (
+                        admin_email,
+                        admin_username,
+                        password_hash,
+                        admin_account["id"],
+                    ),
+                )
+            else:
+                connection.execute(
+                    "INSERT INTO accounts "
+                    "(email, username, password_hash, role, email_verified, created_at) "
+                    "VALUES (?, ?, ?, 'admin', 1, ?)",
+                    (admin_email, admin_username, password_hash, int(time.time())),
+                )
 
     @app.before_request
     def load_current_user():
@@ -295,7 +337,7 @@ def create_app(test_config=None):
         if not re.fullmatch(r"[a-z0-9][a-z0-9_.-]{2,29}", username):
             flash("Choose a username with 3–30 letters, numbers, dots, dashes, or underscores.", "error")
             return redirect(url_for("index"))
-        if username == app.config["ADMIN_EMAIL"]:
+        if username in {app.config["ADMIN_EMAIL"], app.config["ADMIN_USERNAME"]}:
             flash("That username is reserved.", "error")
             return redirect(url_for("index"))
         if len(password) < 8 or len(password) > MAX_ADMIN_PASSWORD_LENGTH:
@@ -650,9 +692,15 @@ def create_app(test_config=None):
             raise click.ClickException("Password must be between 8 and 1024 characters.")
         with connect_db() as connection:
             connection.execute(
-                "INSERT INTO accounts (email, password_hash, role, email_verified, created_at) "
-                "VALUES (?, ?, 'admin', 1, ?)",
-                (email, generate_password_hash(password), int(time.time())),
+                "INSERT INTO accounts "
+                "(email, username, password_hash, role, email_verified, created_at) "
+                "VALUES (?, ?, ?, 'admin', 1, ?)",
+                (
+                    email,
+                    app.config["ADMIN_USERNAME"],
+                    generate_password_hash(password),
+                    int(time.time()),
+                ),
             )
         click.echo("Administrator created. Sign in at /admin/login.")
 
